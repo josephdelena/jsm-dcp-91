@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSM DCP 9.1 FAST</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0e0e; --bg2: #141414; --bg3: #1a1a1a;
+  --border: #2a2a2a; --text: #e8e8e8; --muted: #666;
+  --green: #00e676; --yellow: #ffd600; --red: #ff1744;
+  --blue: #448aff; --orange: #ff9100; --cyan: #00e5ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; min-height: 100vh; }
+
+/* HEADER */
+.header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; letter-spacing: 1px; }
+.header-title span { color: var(--cyan); }
+.fast-badge { background: var(--cyan); color: #000; font-size: 9px; font-weight: 700; padding: 2px 6px; letter-spacing: 1px; }
+.header-sub { font-size: 9px; color: var(--muted); letter-spacing: 2px; }
+.live-price { font-size: 14px; font-weight: 700; color: var(--cyan); }
+.change { font-size: 10px; }
+.change.up { color: var(--green); }
+.change.down { color: var(--red); }
+
+/* TABS */
+.tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg2); }
+.tab-btn { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 12px 20px; cursor: pointer; letter-spacing: 2px; transition: all 0.15s; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* MAIN LAYOUT */
+.main { max-width: 1100px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+.panel { background: var(--bg2); border: 1px solid var(--border); }
+.panel-title { font-size: 9px; letter-spacing: 2px; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.panel-body { padding: 14px; }
+
+/* 1H CONTEXT */
+.h1-panel { background: var(--bg2); border: 1px solid var(--border); margin-bottom: 12px; }
+.h1-panel.has-context { border-color: #00e67640; }
+.h1-panel.warning { border-color: #ffd60040; }
+.h1-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.h1-status { display: flex; align-items: center; gap: 8px; font-size: 9px; letter-spacing: 2px; color: var(--muted); }
+.h1-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+.h1-dot.active { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.h1-dot.warning { background: var(--yellow); }
+.h1-actions { display: flex; gap: 8px; }
+.btn-sm { background: transparent; border: 1px solid var(--border); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 4px 10px; cursor: pointer; letter-spacing: 1px; transition: all 0.15s; }
+.btn-sm:hover { border-color: var(--cyan); color: var(--cyan); }
+.btn-sm.danger:hover { border-color: var(--red); color: var(--red); }
+.h1-context-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 10px 14px; }
+.h1-ctx-item label { font-size: 8px; color: var(--muted); letter-spacing: 1px; display: block; margin-bottom: 3px; }
+.h1-ctx-item span { font-size: 11px; font-weight: 500; }
+.h1-warning { background: #ffd60010; border-top: 1px solid #ffd60030; padding: 8px 14px; font-size: 10px; color: var(--yellow); display:none; }
+.paste-zone { background: #00e5ff08; border: 1px dashed #00e5ff40; padding: 16px; text-align: center; font-size: 10px; color: var(--cyan); cursor: pointer; margin: 10px 14px; letter-spacing: 1px; display: none; }
+.paste-zone:hover { background: #00e5ff15; }
+
+/* CHART SLOTS */
+.chart-input-panel { background: var(--bg2); border: 1px solid var(--border); margin-bottom: 12px; }
+.chart-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+.chart-slot { background: var(--bg2); }
+.slot-header { font-size: 8px; letter-spacing: 2px; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.slot-header span { color: var(--cyan); }
+.paste-area { min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: background 0.15s; padding: 16px; }
+.paste-area:hover { background: var(--bg3); }
+.paste-area .icon { font-size: 24px; opacity: 0.3; }
+.paste-area .label { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+.paste-area img { max-width: 100%; max-height: 120px; object-fit: contain; }
+.slot-clear { font-size: 8px; color: var(--muted); cursor: pointer; padding: 4px 12px; border-top: 1px solid var(--border); text-align: right; }
+.slot-clear:hover { color: var(--red); }
+
+/* MODE TOGGLE */
+.mode-section { margin-bottom: 12px; }
+.mode-label { font-size: 9px; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; }
+.mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+.mode-btn { background: var(--bg2); border: none; color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 10px; cursor: pointer; letter-spacing: 1px; transition: all 0.15s; }
+.mode-btn.active { background: var(--bg3); color: var(--cyan); }
+
+/* ACTIVE POSITION FORM */
+.active-pos-form { display: none; background: var(--bg3); border: 1px solid var(--border); padding: 12px; margin-bottom: 12px; }
+.active-pos-form.visible { display: block; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.form-group label { font-size: 8px; color: var(--muted); letter-spacing: 1px; display: block; margin-bottom: 4px; }
+.form-group input, .form-group select { background: var(--bg2); border: 1px solid var(--border); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 6px 8px; width: 100%; }
+.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--cyan); }
+
+/* RUN BUTTON */
+.run-btn { width: 100%; background: transparent; border: 1px solid var(--cyan); color: var(--cyan); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 14px; cursor: pointer; letter-spacing: 3px; transition: all 0.15s; margin-bottom: 12px; }
+.run-btn:hover { background: var(--cyan); color: #000; }
+.run-btn:disabled { border-color: var(--border); color: var(--muted); cursor: not-allowed; }
+
+/* LOADING */
+.loading { display: none; margin-bottom: 12px; }
+.loading.visible { display: block; }
+.loading-bar { height: 2px; background: var(--border); overflow: hidden; }
+.loading-bar-fill { height: 100%; background: var(--cyan); animation: loadanim 2s ease-in-out infinite; }
+@keyframes loadanim { 0%{width:0%;margin-left:0} 50%{width:60%;margin-left:20%} 100%{width:0%;margin-left:100%} }
+.loading-label { font-size: 9px; color: var(--cyan); letter-spacing: 2px; padding: 6px 0; text-align: center; }
+
+/* RIGHT COLUMN */
+.right-col { display: flex; flex-direction: column; gap: 12px; }
+
+/* VERDICT */
+.verdict-card { background: var(--bg2); border: 1px solid var(--border); }
+.verdict-card.deploy { border-color: #00e67660; }
+.verdict-card.standby { border-color: #ffd60060; }
+.verdict-card.wait { border-color: #ff174460; }
+.verdict-card.tarik { border-color: #ff910060; }
+.verdict-big { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; padding: 20px; letter-spacing: 2px; }
+.verdict-big.deploy { color: var(--green); }
+.verdict-big.standby { color: var(--yellow); }
+.verdict-big.wait { color: var(--red); }
+.verdict-big.tarik { color: var(--orange); }
+.verdict-big.tahan { color: var(--green); }
+.verdict-big.waspada { color: var(--yellow); }
+.verdict-sub { font-size: 9px; color: var(--muted); padding: 0 20px 16px; letter-spacing: 1px; }
+.score-display { display: flex; align-items: center; gap: 12px; padding: 14px; border-top: 1px solid var(--border); }
+.score-num { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--muted); min-width: 56px; }
+.score-num.deploy { color: var(--green); }
+.score-num.standby { color: var(--yellow); }
+.score-num.wait { color: var(--red); }
+.score-bar-wrap { flex: 1; }
+.score-bar { height: 3px; background: var(--border); margin-bottom: 4px; }
+.score-bar-fill { height: 100%; background: var(--muted); transition: width 0.5s ease; }
+.score-bar-fill.deploy { background: var(--green); }
+.score-bar-fill.standby { background: var(--yellow); }
+.score-bar-fill.wait { background: var(--red); }
+.score-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+
+/* CONDITIONS */
+.conditions-card { background: var(--bg2); border: 1px solid var(--border); }
+.cond-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+.cond-row:last-child { border-bottom: none; }
+.cond-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+.cond-val { font-size: 10px; font-weight: 500; }
+.cond-val.ideal { color: var(--green); }
+.cond-val.ok { color: var(--cyan); }
+.cond-val.less { color: var(--yellow); }
+.cond-val.bad { color: var(--red); }
+
+/* EXIT SIGNALS */
+.exit-signals { background: var(--bg2); border: 1px solid var(--border); }
+.exit-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+.exit-row:last-child { border-bottom: none; }
+.exit-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+.exit-badge { font-size: 9px; padding: 2px 8px; }
+.exit-badge.triggered { background: #ff174420; color: var(--red); border: 1px solid #ff174440; }
+.exit-badge.clear { background: #00e67620; color: var(--green); border: 1px solid #00e67640; }
+
+/* DETAILS */
+.details-card { background: var(--bg2); border: 1px solid var(--border); }
+.detail-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 7px 14px; border-bottom: 1px solid var(--border); gap: 8px; }
+.detail-row:last-child { border-bottom: none; }
+.detail-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; flex-shrink: 0; }
+.detail-val { font-size: 10px; text-align: right; }
+.detail-val.green { color: var(--green); }
+.detail-val.yellow { color: var(--yellow); }
+.detail-val.red { color: var(--red); }
+.detail-val.cyan { color: var(--cyan); }
+
+/* ANALYSIS */
+.analysis-card { background: var(--bg2); border: 1px solid var(--border); }
+.analysis-text { font-size: 11px; line-height: 1.7; color: #ccc; padding: 14px; }
+.risk-note { font-size: 10px; color: var(--yellow); padding: 8px 14px; border-top: 1px solid var(--border); line-height: 1.6; }
+.risk-note::before { content: '⚠ '; }
+
+/* SESSION LOG */
+.log-panel { background: var(--bg2); border: 1px solid var(--border); }
+.log-list { max-height: 140px; overflow-y: auto; padding: 8px 0; }
+.log-item { display: flex; gap: 8px; padding: 4px 14px; }
+.log-time { color: var(--muted); font-size: 9px; flex-shrink: 0; }
+.log-text { font-size: 10px; }
+.log-text.info { color: var(--text); }
+.log-text.ok { color: var(--green); }
+.log-text.warn { color: var(--yellow); }
+.log-text.err { color: var(--red); }
+
+/* FEEDBACK BANNER */
+.feedback-banner { background: var(--bg3); border: 1px solid var(--border); border-left: 3px solid var(--cyan); padding: 10px 14px; margin-bottom: 12px; display: none; }
+.feedback-banner.visible { display: block; }
+.feedback-title { font-size: 9px; color: var(--cyan); letter-spacing: 2px; margin-bottom: 6px; }
+.feedback-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.fb-stat label { font-size: 8px; color: var(--muted); display: block; margin-bottom: 2px; }
+.fb-stat span { font-size: 12px; font-weight: 700; }
+.fb-stat span.good { color: var(--green); }
+.fb-stat span.warn { color: var(--yellow); }
+.fb-stat span.bad { color: var(--red); }
+
+/* ── TRACKER TAB ── */
+.tracker-main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+/* QUICK LOG */
+.quick-log { background: var(--bg2); border: 1px solid var(--border); margin-bottom: 16px; }
+.quick-log-grid { display: grid; grid-template-columns: repeat(6, 1fr) auto; gap: 8px; padding: 12px 14px; align-items: end; }
+.qf-group label { font-size: 8px; color: var(--muted); letter-spacing: 1px; display: block; margin-bottom: 4px; }
+.qf-group input, .qf-group select { background: var(--bg3); border: 1px solid var(--border); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 7px 8px; width: 100%; }
+.qf-group input:focus, .qf-group select:focus { outline: none; border-color: var(--cyan); }
+.add-btn { background: var(--cyan); border: none; color: #000; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 7px 16px; cursor: pointer; letter-spacing: 1px; white-space: nowrap; }
+.add-btn:hover { background: #00b8d4; }
+
+/* STATS GRID */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.stat-card { background: var(--bg2); border: 1px solid var(--border); padding: 14px; }
+.stat-card label { font-size: 8px; color: var(--muted); letter-spacing: 2px; display: block; margin-bottom: 6px; }
+.stat-card .stat-val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; }
+.stat-card .stat-val.green { color: var(--green); }
+.stat-card .stat-val.yellow { color: var(--yellow); }
+.stat-card .stat-val.red { color: var(--red); }
+.stat-card .stat-val.cyan { color: var(--cyan); }
+.stat-card .stat-sub { font-size: 9px; color: var(--muted); margin-top: 4px; }
+
+/* ACCURACY PANEL */
+.accuracy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.acc-card { background: var(--bg2); border: 1px solid var(--border); }
+.acc-row { display: flex; justify-content: space-between; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+.acc-row:last-child { border-bottom: none; }
+.acc-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+.acc-val { font-size: 11px; font-weight: 700; }
+.acc-val.green { color: var(--green); }
+.acc-val.yellow { color: var(--yellow); }
+.acc-val.red { color: var(--red); }
+.acc-val.cyan { color: var(--cyan); }
+
+/* EQUITY CURVE */
+.equity-card { background: var(--bg2); border: 1px solid var(--border); margin-bottom: 16px; }
+.equity-canvas { width: 100%; height: 120px; display: block; }
+
+/* CYCLE TABLE */
+.cycle-table-card { background: var(--bg2); border: 1px solid var(--border); }
+.cycle-table { width: 100%; border-collapse: collapse; }
+.cycle-table th { font-size: 8px; color: var(--muted); letter-spacing: 1px; padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; font-weight: 400; }
+.cycle-table td { font-size: 10px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.cycle-table tr:last-child td { border-bottom: none; }
+.cycle-table tr:hover td { background: var(--bg3); }
+.badge { display: inline-block; font-size: 8px; padding: 2px 6px; letter-spacing: 1px; }
+.badge.win { background: #00e67620; color: var(--green); border: 1px solid #00e67640; }
+.badge.loss { background: #ff174420; color: var(--red); border: 1px solid #ff174440; }
+.badge.deploy { background: #00e5ff20; color: var(--cyan); border: 1px solid #00e5ff40; }
+.badge.wait { background: #ffd60020; color: var(--yellow); border: 1px solid #ffd60040; }
+.table-actions { display: flex; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); justify-content: flex-end; }
+.tbl-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 4px 10px; cursor: pointer; }
+.tbl-btn:hover { border-color: var(--text); color: var(--text); }
+.tbl-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+.footer { text-align: center; padding: 16px; font-size: 9px; color: var(--muted); letter-spacing: 1px; border-top: 1px solid var(--border); }
+::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-title">JSM DCP <span>9.1</span></div>
+    <div class="fast-badge">FAST VERSION</div>
+    <div class="header-sub">SOL/USDC · ORCA · 0.04%</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="live-price" id="livePrice">$—</div>
+    <div class="change" id="priceChange"></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('agent')">▶ AGENT</button>
+  <button class="tab-btn" onclick="switchTab('tracker')">◈ TRACKER</button>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- TAB: AGENT -->
+<!-- ══════════════════════════════════ -->
+<div class="tab-content active" id="tab-agent">
+  <div class="main">
+    <!-- LEFT -->
+    <div>
+      <!-- FEEDBACK BANNER -->
+      <div class="feedback-banner" id="feedbackBanner">
+        <div class="feedback-title">FEEDBACK LOOP — DATA DARI TRACKER</div>
+        <div class="feedback-stats">
+          <div class="fb-stat"><label>AKURASI DEPLOY</label><span id="fb-akurasi">—</span></div>
+          <div class="fb-stat"><label>AVG PnL WIN</label><span id="fb-avgwin">—</span></div>
+          <div class="fb-stat"><label>TOTAL CYCLE</label><span id="fb-total">—</span></div>
+        </div>
+      </div>
+
+      <!-- 1H CONTEXT -->
+      <div class="h1-panel" id="h1Panel">
+        <div class="h1-header">
+          <div class="h1-status">
+            <div class="h1-dot" id="h1Dot"></div>
+            <span>1H CONTEXT</span>
+            <span id="h1StatusText" style="color:var(--muted)">BELUM ADA</span>
+          </div>
+          <div class="h1-actions">
+            <button class="btn-sm" onclick="activate1HPaste()" id="set1HBtn">↑ SET 1H</button>
+            <button class="btn-sm danger" onclick="clear1HContext()" id="clear1HBtn" style="display:none">× HAPUS</button>
+          </div>
+        </div>
+        <div class="paste-zone" id="h1PasteZone" onclick="document.getElementById('h1FileInput').click()">CTRL+V untuk paste chart 1H — atau klik untuk upload</div>
+        <input type="file" id="h1FileInput" accept="image/*" style="display:none" onchange="handle1HFile(event)">
+        <div class="h1-context-grid" id="h1ContextRow" style="display:none">
+          <div class="h1-ctx-item"><label>TREND</label><span id="h1Trend">—</span></div>
+          <div class="h1-ctx-item"><label>RANGE</label><span id="h1Range">—</span></div>
+          <div class="h1-ctx-item"><label>BIAS</label><span id="h1Bias">—</span></div>
+        </div>
+        <div class="h1-warning" id="h1WarningBar"><span id="h1WarningText"></span></div>
+      </div>
+
+      <!-- MODE -->
+      <div class="mode-section">
+        <div class="mode-label">MODE ANALISA</div>
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="modeEntryBtn" onclick="setMode('ENTRY')">▶ ENTRY SCAN</button>
+          <button class="mode-btn" id="modeExitBtn" onclick="setMode('EXIT')">⏹ EXIT CHECK</button>
+        </div>
+      </div>
+
+      <!-- ACTIVE POS FORM -->
+      <div class="active-pos-form" id="activePosForm">
+        <div class="panel-title" style="padding:0 0 8px 0;border:none">DATA POSISI AKTIF</div>
+        <div class="form-grid">
+          <div class="form-group"><label>ENTRY PRICE</label><input type="number" id="posEntryPrice" placeholder="85.20" step="0.01"></div>
+          <div class="form-group"><label>RANGE BAWAH</label><input type="number" id="posRangeLow" placeholder="83.50" step="0.01"></div>
+          <div class="form-group"><label>RANGE ATAS</label><input type="number" id="posRangeHigh" placeholder="87.00" step="0.01"></div>
+          <div class="form-group"><label>DURASI (jam)</label><input type="number" id="posDuration" placeholder="1.5" step="0.1"></div>
+          <div class="form-group"><label>CURRENT PnL %</label><input type="number" id="posPnl" placeholder="0.28" step="0.01"></div>
+        </div>
+      </div>
+
+      <!-- CHARTS -->
+      <div class="chart-input-panel">
+        <div class="panel-title">INPUT CHART</div>
+        <div class="chart-slots">
+          <div class="chart-slot">
+            <div class="slot-header">CHART <span>5M</span> — WAJIB</div>
+            <div class="paste-area" id="slot5M" onclick="document.getElementById('file5M').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event,'5M')">
+              <div class="icon">📊</div><div class="label">CTRL+V atau klik</div>
+            </div>
+            <input type="file" id="file5M" accept="image/*" style="display:none" onchange="handleFile(event,'5M')">
+            <div class="slot-clear" id="clear5M" style="display:none" onclick="clearSlot('5M')">× hapus</div>
+          </div>
+          <div class="chart-slot" id="zone1HWrapper">
+            <div class="slot-header">CHART <span>1H</span> — OPSIONAL</div>
+            <div class="paste-area" id="slot1H" onclick="document.getElementById('file1H').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event,'1H')">
+              <div class="icon">📈</div><div class="label">CTRL+V atau klik</div>
+            </div>
+            <input type="file" id="file1H" accept="image/*" style="display:none" onchange="handleFile(event,'1H')">
+            <div class="slot-clear" id="clear1H" style="display:none" onclick="clearSlot('1H')">× hapus</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="run-btn" id="runBtn" onclick="runAnalysis()">▶ JALANKAN ANALISA</button>
+      <div class="loading" id="loading"><div class="loading-bar"><div class="loading-bar-fill"></div></div><div class="loading-label" id="loadingLabel">MEMPROSES...</div></div>
+
+      <!-- LOG -->
+      <div class="log-panel">
+        <div class="panel-title">SESSION LOG</div>
+        <div class="log-list" id="logList">
+          <div class="log-item"><span class="log-time">--:--</span><span class="log-text info">JSM DCP 9.1 FAST siap.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-col">
+      <div class="verdict-card" id="verdictCard">
+        <div class="verdict-big" id="verdictBig">—</div>
+        <div class="verdict-sub" id="verdictSub">Menunggu analisa</div>
+        <div class="score-display" id="scoreDisplay" style="display:none">
+          <div class="score-num" id="scoreNum">0</div>
+          <div class="score-bar-wrap">
+            <div class="score-bar"><div class="score-bar-fill" id="scoreBarFill" style="width:0%"></div></div>
+            <div class="score-label" id="scoreLabel">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="conditions-card" id="conditionsCard" style="display:none">
+        <div class="panel-title">3 KONDISI CHECK</div>
+        <div class="cond-row"><div class="cond-label">A — POSISI vs PIVOT</div><div class="cond-val" id="condA">—</div></div>
+        <div class="cond-row"><div class="cond-label">B — STRUKTUR 1H</div><div class="cond-val" id="condB">—</div></div>
+        <div class="cond-row"><div class="cond-label">C — STABILISASI</div><div class="cond-val" id="condC">—</div></div>
+      </div>
+
+      <div class="exit-signals" id="exitSignalsCard" style="display:none">
+        <div class="panel-title">EXIT SIGNALS</div>
+        <div class="exit-row"><div class="exit-label">TARGET 0.5% TERCAPAI</div><div class="exit-badge" id="ex1">—</div></div>
+        <div class="exit-row"><div class="exit-label">ANCAMAN KELUAR RANGE</div><div class="exit-badge" id="ex2">—</div></div>
+        <div class="exit-row"><div class="exit-label">MOMENTUM HABIS</div><div class="exit-badge" id="ex3">—</div></div>
+        <div class="exit-row"><div class="exit-label">DURASI TERLALU LAMA</div><div class="exit-badge" id="ex4">—</div></div>
+      </div>
+
+      <div class="details-card" id="detailsCard" style="display:none">
+        <div class="panel-title">DETAIL</div>
+        <div id="detailRows"></div>
+      </div>
+
+      <div class="analysis-card" id="analysisCard" style="display:none">
+        <div class="panel-title">ANALISA</div>
+        <div class="analysis-text" id="analysisText">—</div>
+        <div class="risk-note" id="riskNote">—</div>
+      </div>
+
+      <!-- QUICK LOG TO TRACKER -->
+      <div class="panel" id="quickLogPanel" style="display:none">
+        <div class="panel-title">CATAT KE TRACKER</div>
+        <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;">
+          <div class="form-grid">
+            <div class="form-group"><label>HASIL</label>
+              <select id="ql-hasil"><option value="">Pilih...</option><option value="WIN">WIN</option><option value="LOSS">LOSS</option><option value="BREAKEVEN">BREAKEVEN</option></select>
+            </div>
+            <div class="form-group"><label>PnL AKTUAL %</label><input type="number" id="ql-pnl" placeholder="0.41" step="0.01"></div>
+            <div class="form-group"><label>DURASI (menit)</label><input type="number" id="ql-durasi" placeholder="96" step="1"></div>
+            <div class="form-group"><label>FEE EARNED $</label><input type="number" id="ql-fee" placeholder="2.41" step="0.01"></div>
+          </div>
+          <button class="add-btn" style="width:100%" onclick="quickLogFromAgent()">+ CATAT CYCLE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- TAB: TRACKER -->
+<!-- ══════════════════════════════════ -->
+<div class="tab-content" id="tab-tracker">
+  <div class="tracker-main">
+
+    <!-- QUICK ADD -->
+    <div class="quick-log">
+      <div class="panel-title">TAMBAH CYCLE BARU</div>
+      <div class="quick-log-grid">
+        <div class="qf-group"><label>TANGGAL</label><input type="date" id="qf-tgl"></div>
+        <div class="qf-group"><label>HASIL</label>
+          <select id="qf-hasil"><option value="WIN">WIN</option><option value="LOSS">LOSS</option><option value="BREAKEVEN">BREAKEVEN</option></select>
+        </div>
+        <div class="qf-group"><label>PnL %</label><input type="number" id="qf-pnl" placeholder="0.41" step="0.01"></div>
+        <div class="qf-group"><label>DURASI (mnt)</label><input type="number" id="qf-durasi" placeholder="96" step="1"></div>
+        <div class="qf-group"><label>FEE EARNED $</label><input type="number" id="qf-fee" placeholder="2.41" step="0.01"></div>
+        <div class="qf-group"><label>VERDICT AGENT</label>
+          <select id="qf-verdict"><option value="">—</option><option value="DEPLOY">DEPLOY</option><option value="STANDBY">STANDBY</option><option value="WAIT">WAIT</option></select>
+        </div>
+        <button class="add-btn" onclick="addCycle()">+ TAMBAH</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card"><label>TOTAL CYCLE</label><div class="stat-val cyan" id="st-total">0</div><div class="stat-sub">recorded</div></div>
+      <div class="stat-card"><label>WIN RATE</label><div class="stat-val green" id="st-winrate">0%</div><div class="stat-sub" id="st-wincount">0 WIN / 0 LOSS</div></div>
+      <div class="stat-card"><label>TOTAL PnL</label><div class="stat-val" id="st-pnl">+0.00%</div><div class="stat-sub">kumulatif</div></div>
+      <div class="stat-card"><label>AVG DURASI</label><div class="stat-val yellow" id="st-durasi">0m</div><div class="stat-sub">per cycle</div></div>
+    </div>
+
+    <!-- ACCURACY + EQUITY -->
+    <div class="accuracy-grid">
+      <div class="acc-card">
+        <div class="panel-title">AGENT ACCURACY</div>
+        <div class="acc-row"><div class="acc-label">AKURASI DEPLOY→WIN</div><div class="acc-val green" id="ac-deploy">—</div></div>
+        <div class="acc-row"><div class="acc-label">FALSE SIGNAL (DEPLOY→LOSS)</div><div class="acc-val red" id="ac-false">—</div></div>
+        <div class="acc-row"><div class="acc-label">OVER-CONSERVATIVE (WAIT→WIN)</div><div class="acc-val yellow" id="ac-conservative">—</div></div>
+        <div class="acc-row"><div class="acc-label">AVG SCORE WIN</div><div class="acc-val cyan" id="ac-scorew">—</div></div>
+        <div class="acc-row"><div class="acc-label">AVG SCORE LOSS</div><div class="acc-val red" id="ac-scorel">—</div></div>
+      </div>
+      <div class="acc-card">
+        <div class="panel-title">PERFORMA PER KONDISI</div>
+        <div class="acc-row"><div class="acc-label">FAVORABLE (dekat pivot)</div><div class="acc-val green" id="ac-fav">—</div></div>
+        <div class="acc-row"><div class="acc-label">IDEAL (struktur ranging)</div><div class="acc-val green" id="ac-ideal">—</div></div>
+        <div class="acc-row"><div class="acc-label">AVG PnL WIN</div><div class="acc-val green" id="ac-avgwin">—</div></div>
+        <div class="acc-row"><div class="acc-label">AVG PnL LOSS</div><div class="acc-val red" id="ac-avgloss">—</div></div>
+        <div class="acc-row"><div class="acc-label">AVG DURASI WIN (mnt)</div><div class="acc-val cyan" id="ac-dur">—</div></div>
+      </div>
+    </div>
+
+    <!-- EQUITY CURVE -->
+    <div class="equity-card">
+      <div class="panel-title">EQUITY CURVE</div>
+      <canvas class="equity-canvas" id="equityCanvas"></canvas>
+    </div>
+
+    <!-- TABLE -->
+    <div class="cycle-table-card">
+      <div class="table-actions">
+        <button class="tbl-btn" onclick="exportCSV()">↓ EXPORT CSV</button>
+        <button class="tbl-btn danger" onclick="clearAll()">× HAPUS SEMUA</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="cycle-table">
+          <thead>
+            <tr>
+              <th>#</th><th>TANGGAL</th><th>HASIL</th><th>PnL %</th><th>DURASI</th><th>FEE $</th><th>VERDICT</th><th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody id="cycleTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">JSM DCP 9.1 FAST — PROPERTI DIMENSI GROUP · INTERNAL USE ONLY</div>
+
+<script>
+// ════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════
+const H1_KEY = 'jsm_91_h1_ctx';
+const CYCLES_KEY = 'jsm_91_cycles';
+const LAST_RESULT_KEY = 'jsm_91_last_result';
+
+function getCycles() { try { return JSON.parse(localStorage.getItem(CYCLES_KEY) || '[]'); } catch(e) { return []; } }
+function saveCycles(c) { localStorage.setItem(CYCLES_KEY, JSON.stringify(c)); }
+function getH1() { try { const s = localStorage.getItem(H1_KEY); return s ? JSON.parse(s) : null; } catch(e) { return null; } }
+function saveH1(ctx) { localStorage.setItem(H1_KEY, JSON.stringify(ctx)); }
+function clear1HContext() { localStorage.removeItem(H1_KEY); renderH1Panel(); addLog('1H context dihapus.', 'info'); }
+
+// ════════════════════════════════════
+// TABS
+// ════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.className = 'tab-btn' + (['agent','tracker'][i] === tab ? ' active' : ''));
+  document.querySelectorAll('.tab-content').forEach(c => c.className = 'tab-content');
+  document.getElementById('tab-' + tab).className = 'tab-content active';
+  if (tab === 'tracker') renderTracker();
+}
+
+// ════════════════════════════════════
+// 1H CONTEXT
+// ════════════════════════════════════
+function activate1HPaste() {
+  const zone = document.getElementById('h1PasteZone');
+  zone.style.display = zone.style.display === 'none' ? 'block' : 'none';
+  if (zone.style.display === 'block') addLog('Siap terima paste 1H.', 'info');
+}
+async function process1HImage(base64, mediaType) {
+  const btn = document.getElementById('set1HBtn');
+  btn.textContent = 'ANALYZING...'; btn.disabled = true;
+  try {
+    const r = await fetch('/api/analyze-1h', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ imageBase64: base64, mediaType }) });
+    const data = await r.json();
+    if (!r.ok) { addLog('Gagal: ' + (data.error||'unknown'), 'err'); return; }
+    data.priceAtSet = livePrice; data.updatedAt = new Date().toISOString();
+    saveH1(data); renderH1Panel();
+    document.getElementById('h1PasteZone').style.display = 'none';
+    addLog('1H aktif. Trend: ' + data.trend, 'ok');
+  } catch(e) { addLog('Error 1H: ' + e.message, 'err'); }
+  finally { btn.textContent = '↑ SET 1H'; btn.disabled = false; }
+}
+function handle1HFile(e) {
+  const file = e.target.files[0]; if (!file) return; e.target.value = '';
+  const r = new FileReader();
+  r.onload = async ev => await process1HImage(ev.target.result.split(',')[1], file.type || 'image/png');
+  r.readAsDataURL(file);
+}
+function renderH1Panel() {
+  const ctx = getH1();
+  const dot = document.getElementById('h1Dot');
+  const stxt = document.getElementById('h1StatusText');
+  const ctxRow = document.getElementById('h1ContextRow');
+  const clearBtn = document.getElementById('clear1HBtn');
+  const panel = document.getElementById('h1Panel');
+  const warnBar = document.getElementById('h1WarningBar');
+  const zone1H = document.getElementById('zone1HWrapper');
+  if (!ctx) {
+    dot.className = 'h1-dot'; stxt.textContent = 'BELUM ADA'; stxt.style.color = '';
+    ctxRow.style.display = 'none'; clearBtn.style.display = 'none';
+    panel.className = 'h1-panel'; warnBar.style.display = 'none';
+    if (zone1H) zone1H.style.display = 'block'; return;
+  }
+  if (zone1H) zone1H.style.display = 'none';
+  document.getElementById('h1Trend').textContent = ctx.trend || '—';
+  document.getElementById('h1Trend').style.color = ctx.trend === 'BULLISH' ? 'var(--green)' : ctx.trend === 'BEARISH' ? 'var(--red)' : 'var(--yellow)';
+  document.getElementById('h1Range').textContent = (ctx.rangeLow||'—') + ' – ' + (ctx.rangeHigh||'—');
+  document.getElementById('h1Bias').textContent = (ctx.bias||'—') + ' · ' + (ctx.biasStrength||'—');
+  ctxRow.style.display = 'grid'; clearBtn.style.display = 'block';
+  const age = ctx.updatedAt ? (Date.now() - new Date(ctx.updatedAt).getTime()) / 3600000 : 0;
+  const move = (ctx.priceAtSet && livePrice) ? Math.abs((livePrice - ctx.priceAtSet) / ctx.priceAtSet * 100) : 0;
+  if (move > 1.5 || age > 4) {
+    dot.className = 'h1-dot warning'; stxt.textContent = 'PERLU UPDATE'; stxt.style.color = 'var(--yellow)';
+    panel.className = 'h1-panel warning'; warnBar.style.display = 'block';
+    document.getElementById('h1WarningText').textContent = move > 1.5 ? `Harga bergerak ${move.toFixed(2)}% dari saat set.` : `Context sudah ${age.toFixed(1)} jam.`;
+  } else {
+    dot.className = 'h1-dot active'; stxt.textContent = 'AKTIF'; stxt.style.color = 'var(--green)';
+    panel.className = 'h1-panel has-context'; warnBar.style.display = 'none';
+  }
+}
+
+// ════════════════════════════════════
+// MODE
+// ════════════════════════════════════
+let currentMode = 'ENTRY';
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('modeEntryBtn').className = 'mode-btn' + (mode === 'ENTRY' ? ' active' : '');
+  document.getElementById('modeExitBtn').className = 'mode-btn' + (mode === 'EXIT' ? ' active' : '');
+  document.getElementById('activePosForm').className = 'active-pos-form' + (mode === 'EXIT' ? ' visible' : '');
+}
+
+// ════════════════════════════════════
+// CHART SLOTS
+// ════════════════════════════════════
+let imgData = { '5M': null, '1H': null };
+function handleFile(e, slot) {
+  const file = e.target.files[0]; if (!file) return; e.target.value = '';
+  const r = new FileReader();
+  r.onload = ev => setSlotImage(slot, ev.target.result, file.type);
+  r.readAsDataURL(file);
+}
+function handleDrop(e, slot) {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0]; if (!file || !file.type.startsWith('image/')) return;
+  const r = new FileReader(); r.onload = ev => setSlotImage(slot, ev.target.result, file.type); r.readAsDataURL(file);
+}
+function setSlotImage(slot, dataUrl, type) {
+  imgData[slot] = { dataUrl, type };
+  const area = document.getElementById('slot' + slot);
+  area.innerHTML = `<img src="${dataUrl}" style="max-width:100%;max-height:120px;object-fit:contain;">`;
+  document.getElementById('clear' + slot).style.display = 'block';
+  addLog('Chart ' + slot + ' dimuat.', 'info');
+}
+function clearSlot(slot) {
+  imgData[slot] = null;
+  document.getElementById('slot' + slot).innerHTML = `<div class="icon">${slot==='5M'?'📊':'📈'}</div><div class="label">CTRL+V atau klik</div>`;
+  document.getElementById('clear' + slot).style.display = 'none';
+}
+document.addEventListener('paste', e => {
+  const zone = document.getElementById('h1PasteZone');
+  const items = e.clipboardData?.items; if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      const r = new FileReader();
+      if (zone && zone.style.display !== 'none') {
+        r.onload = ev => process1HImage(ev.target.result.split(',')[1], file.type);
+      } else if (!imgData['5M']) {
+        r.onload = ev => setSlotImage('5M', ev.target.result, file.type);
+      } else if (!imgData['1H']) {
+        r.onload = ev => setSlotImage('1H', ev.target.result, file.type);
+      } else { break; }
+      r.readAsDataURL(file); break;
+    }
+  }
+});
+
+// ════════════════════════════════════
+// PRICE
+// ════════════════════════════════════
+let livePrice = null, prevPrice = null;
+async function fetchPrice() {
+  try {
+    const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDC');
+    const d = await r.json(); const p = parseFloat(d.price);
+    if (!isNaN(p)) {
+      prevPrice = livePrice; livePrice = p;
+      document.getElementById('livePrice').textContent = '$' + p.toFixed(3);
+      const chEl = document.getElementById('priceChange');
+      if (chEl && prevPrice) {
+        const diff = p - prevPrice; const pct = (diff/prevPrice*100).toFixed(3);
+        if (diff > 0) { chEl.textContent = '▲'+pct+'%'; chEl.className = 'change up'; }
+        else if (diff < 0) { chEl.textContent = '▼'+Math.abs(pct)+'%'; chEl.className = 'change down'; }
+      }
+    }
+  } catch(e) {}
+}
+
+// ════════════════════════════════════
+// RUN ANALYSIS
+// ════════════════════════════════════
+let lastResult = null;
+async function runAnalysis() {
+  if (!imgData['5M']) { addLog('Paste chart 5M terlebih dahulu.', 'warn'); return; }
+  const btn = document.getElementById('runBtn');
+  const loading = document.getElementById('loading');
+  btn.disabled = true; loading.className = 'loading visible';
+  const h1ctx = getH1();
+  let activePosition = null;
+  if (currentMode === 'EXIT') {
+    activePosition = {
+      entryPrice: document.getElementById('posEntryPrice').value,
+      rangeLow: document.getElementById('posRangeLow').value,
+      rangeHigh: document.getElementById('posRangeHigh').value,
+      duration: document.getElementById('posDuration').value + ' jam',
+      currentPnl: document.getElementById('posPnl').value
+    };
+  }
+  const payload = {
+    imageBase64: imgData['5M'].dataUrl.split(',')[1],
+    mediaType: imgData['5M'].type,
+    h1Context: h1ctx,
+    activePosition: currentMode === 'EXIT' ? activePosition : null
+  };
+  if (imgData['1H'] && !h1ctx) {
+    payload.imageBase64_1H = imgData['1H'].dataUrl.split(',')[1];
+    payload.mediaType1H = imgData['1H'].type;
+  }
+  try {
+    const r = await fetch('/api/analyze', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const d = await r.json();
+    if (!r.ok) { addLog('Error: ' + (d.error||'unknown'), 'err'); return; }
+    lastResult = d;
+    localStorage.setItem(LAST_RESULT_KEY, JSON.stringify(d));
+    renderResult(d);
+    if (currentMode === 'ENTRY') {
+      document.getElementById('quickLogPanel').style.display = 'block';
+      // pre-fill verdict
+      document.getElementById('ql-hasil').value = '';
+      document.getElementById('ql-pnl').value = '';
+    }
+    addLog('Analisa selesai. Verdict: ' + d.verdict + (d.score ? ' | Score: ' + d.score : ''), ['DEPLOY','TAHAN'].includes(d.verdict) ? 'ok' : 'warn');
+  } catch(e) { addLog('Error: ' + e.message, 'err'); }
+  finally { btn.disabled = false; loading.className = 'loading'; }
+}
+
+function renderResult(d) {
+  const isEntry = d.mode === 'ENTRY_SCAN' || !d.mode;
+  const verdictMap = {
+    'DEPLOY': {label:'▶ DEPLOY', cls:'deploy'},
+    'STANDBY': {label:'◈ STANDBY', cls:'standby'},
+    'WAIT': {label:'⏸ WAIT', cls:'wait'},
+    'TAHAN': {label:'✓ TAHAN', cls:'tahan'},
+    'WASPADA': {label:'⚠ WASPADA', cls:'waspada'},
+    'TARIK_SEKARANG': {label:'⏹ TARIK SEKARANG', cls:'tarik'},
+  };
+  const v = verdictMap[d.verdict] || {label:d.verdict, cls:'wait'};
+  document.getElementById('verdictBig').textContent = v.label;
+  document.getElementById('verdictBig').className = 'verdict-big ' + v.cls;
+  document.getElementById('verdictCard').className = 'verdict-card ' + v.cls;
+  const scoreDisp = document.getElementById('scoreDisplay');
+  if (isEntry && d.score !== undefined) {
+    scoreDisp.style.display = 'flex';
+    document.getElementById('scoreNum').textContent = d.score;
+    document.getElementById('scoreNum').className = 'score-num ' + v.cls;
+    document.getElementById('scoreBarFill').style.width = d.score + '%';
+    document.getElementById('scoreBarFill').className = 'score-bar-fill ' + v.cls;
+    document.getElementById('scoreLabel').textContent = d.score >= 60 ? 'SETUP VALID' : d.score >= 45 ? 'HAMPIR SIAP' : 'BELUM SIAP';
+    document.getElementById('verdictSub').textContent = 'Score: ' + d.score + '/100 · Capital: ' + (d.capitalDeploy||'0%');
+  } else {
+    scoreDisp.style.display = 'none';
+    document.getElementById('verdictSub').textContent = d.verdict === 'TAHAN' ? 'Fee terus terkumpul' : d.verdict === 'WASPADA' ? 'Monitor ketat' : 'Tarik LP segera';
+  }
+  const condCard = document.getElementById('conditionsCard');
+  const exitCard = document.getElementById('exitSignalsCard');
+  if (isEntry) {
+    condCard.style.display = 'block'; exitCard.style.display = 'none';
+    const condMap = {'FAVORABLE':'ideal','IDEAL':'ideal','OK':'ok','LESS FAVORABLE':'less','LESS_FAVORABLE':'less','BLOCK':'bad','UNCLEAR':'less'};
+    const setC = (id, val) => { const el = document.getElementById(id); el.textContent = val||'—'; el.className = 'cond-val ' + (condMap[(val||'').toUpperCase().replace(' ','_')]||'ok'); };
+    setC('condA', d.kondisiA_pivot); setC('condB', d.kondisiB_struktur); setC('condC', d.kondisiC_stabilisasi);
+  } else {
+    condCard.style.display = 'none'; exitCard.style.display = 'block';
+    const setBadge = (id, triggered) => { const el = document.getElementById(id); el.textContent = triggered ? 'TRIGGERED' : 'CLEAR'; el.className = 'exit-badge ' + (triggered ? 'triggered' : 'clear'); };
+    setBadge('ex1', d.exitSignal1_target); setBadge('ex2', d.exitSignal2_ancaman); setBadge('ex3', d.exitSignal3_momentum); setBadge('ex4', d.exitSignal4_durasi);
+  }
+  document.getElementById('detailsCard').style.display = 'block';
+  let rows = '';
+  if (isEntry) {
+    if (d.pivotPoint) rows += dr('PIVOT POINT', d.pivotPoint, 'cyan');
+    if (d.entryZone) rows += dr('ENTRY ZONE', d.entryZone, 'green');
+    if (d.rangeLow && d.rangeHigh) rows += dr('RANGE LP', d.rangeLow + ' – ' + d.rangeHigh + ' (' + (d.rangeWidth||'') + ')', 'green');
+    if (d.targetReturn) rows += dr('TARGET RETURN', d.targetReturn, 'yellow');
+    if (d.capitalDeploy) rows += dr('CAPITAL', d.capitalDeploy, d.capitalDeploy === '100%' ? 'green' : 'yellow');
+    if (d.support1H) rows += dr('SUPPORT 1H', d.support1H, 'cyan');
+    if (d.resistance1H) rows += dr('RESISTANCE 1H', d.resistance1H, 'cyan');
+    if (d.exitTrigger) rows += dr('EXIT TRIGGER', d.exitTrigger, 'yellow');
+  } else {
+    if (d.jarakKeBatasBawah) rows += dr('JARAK KE BATAS BAWAH', d.jarakKeBatasBawah, parseFloat(d.jarakKeBatasBawah) < 0.5 ? 'red' : 'cyan');
+    if (d.estimasiPnL) rows += dr('ESTIMASI PnL', d.estimasiPnL, 'green');
+    if (d.actionNote) rows += dr('ACTION', d.actionNote, 'yellow');
+  }
+  document.getElementById('detailRows').innerHTML = rows;
+  document.getElementById('analysisCard').style.display = 'block';
+  document.getElementById('analysisText').textContent = d.analysis || '—';
+  document.getElementById('riskNote').textContent = d.riskNote || d.actionNote || '—';
+}
+function dr(label, val, color) { return `<div class="detail-row"><div class="detail-label">${label}</div><div class="detail-val ${color||''}">${val}</div></div>`; }
+
+// ════════════════════════════════════
+// QUICK LOG FROM AGENT
+// ════════════════════════════════════
+function quickLogFromAgent() {
+  const hasil = document.getElementById('ql-hasil').value;
+  const pnl = document.getElementById('ql-pnl').value;
+  const durasi = document.getElementById('ql-durasi').value;
+  const fee = document.getElementById('ql-fee').value;
+  if (!hasil || !pnl) { addLog('Isi Hasil dan PnL terlebih dahulu.', 'warn'); return; }
+  const cycles = getCycles();
+  const verdict = lastResult?.verdict || '';
+  const score = lastResult?.score || '';
+  cycles.push({
+    id: Date.now(),
+    tgl: new Date().toISOString().slice(0,10),
+    hasil, pnl: parseFloat(pnl), durasi: parseInt(durasi)||0,
+    fee: parseFloat(fee)||0, verdict, score
+  });
+  saveCycles(cycles);
+  updateFeedbackBanner();
+  document.getElementById('quickLogPanel').style.display = 'none';
+  addLog('Cycle dicatat: ' + hasil + ' ' + pnl + '%', hasil === 'WIN' ? 'ok' : 'warn');
+}
+
+// ════════════════════════════════════
+// FEEDBACK BANNER
+// ════════════════════════════════════
+function updateFeedbackBanner() {
+  const cycles = getCycles();
+  const withVerdict = cycles.filter(c => c.verdict);
+  if (withVerdict.length < 3) { document.getElementById('feedbackBanner').className = 'feedback-banner'; return; }
+  const deployWin = withVerdict.filter(c => c.verdict === 'DEPLOY' && c.hasil === 'WIN').length;
+  const deployTotal = withVerdict.filter(c => c.verdict === 'DEPLOY').length;
+  const akurasi = deployTotal > 0 ? Math.round(deployWin / deployTotal * 100) : 0;
+  const wins = cycles.filter(c => c.hasil === 'WIN');
+  const avgWin = wins.length > 0 ? (wins.reduce((a,c) => a + c.pnl, 0) / wins.length).toFixed(2) : 0;
+  document.getElementById('fb-akurasi').textContent = akurasi + '%';
+  document.getElementById('fb-akurasi').className = akurasi >= 70 ? 'good' : akurasi >= 50 ? 'warn' : 'bad';
+  document.getElementById('fb-avgwin').textContent = '+' + avgWin + '%';
+  document.getElementById('fb-avgwin').className = 'good';
+  document.getElementById('fb-total').textContent = cycles.length;
+  document.getElementById('feedbackBanner').className = 'feedback-banner visible';
+}
+
+// ════════════════════════════════════
+// TRACKER
+// ════════════════════════════════════
+function addCycle() {
+  const tgl = document.getElementById('qf-tgl').value || new Date().toISOString().slice(0,10);
+  const hasil = document.getElementById('qf-hasil').value;
+  const pnl = parseFloat(document.getElementById('qf-pnl').value) || 0;
+  const durasi = parseInt(document.getElementById('qf-durasi').value) || 0;
+  const fee = parseFloat(document.getElementById('qf-fee').value) || 0;
+  const verdict = document.getElementById('qf-verdict').value;
+  const cycles = getCycles();
+  cycles.push({ id: Date.now(), tgl, hasil, pnl, durasi, fee, verdict, score: '' });
+  saveCycles(cycles);
+  renderTracker();
+  // clear
+  document.getElementById('qf-pnl').value = '';
+  document.getElementById('qf-durasi').value = '';
+  document.getElementById('qf-fee').value = '';
+  document.getElementById('qf-verdict').value = '';
+}
+
+function deleteCycle(id) {
+  saveCycles(getCycles().filter(c => c.id !== id));
+  renderTracker();
+}
+
+function clearAll() {
+  if (!confirm('Hapus semua data cycle?')) return;
+  saveCycles([]);
+  renderTracker();
+}
+
+function renderTracker() {
+  const cycles = getCycles();
+  // stats
+  const wins = cycles.filter(c => c.hasil === 'WIN');
+  const losses = cycles.filter(c => c.hasil === 'LOSS');
+  const totalPnl = cycles.reduce((a,c) => a + (c.pnl||0), 0);
+  const avgDur = cycles.length > 0 ? Math.round(cycles.reduce((a,c) => a + (c.durasi||0), 0) / cycles.length) : 0;
+  const winrate = cycles.length > 0 ? Math.round(wins.length / cycles.length * 100) : 0;
+  document.getElementById('st-total').textContent = cycles.length;
+  document.getElementById('st-winrate').textContent = winrate + '%';
+  document.getElementById('st-winrate').className = 'stat-val ' + (winrate >= 60 ? 'green' : winrate >= 40 ? 'yellow' : 'red');
+  document.getElementById('st-wincount').textContent = wins.length + ' WIN / ' + losses.length + ' LOSS';
+  const pnlEl = document.getElementById('st-pnl');
+  pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + totalPnl.toFixed(2) + '%';
+  pnlEl.className = 'stat-val ' + (totalPnl >= 0 ? 'green' : 'red');
+  document.getElementById('st-durasi').textContent = avgDur + 'm';
+
+  // accuracy
+  const withV = cycles.filter(c => c.verdict);
+  const dep = withV.filter(c => c.verdict === 'DEPLOY');
+  const depWin = dep.filter(c => c.hasil === 'WIN').length;
+  const depLoss = dep.filter(c => c.hasil === 'LOSS').length;
+  const waitWin = withV.filter(c => c.verdict === 'WAIT' && c.hasil === 'WIN').length;
+  const withScore = cycles.filter(c => c.score);
+  const avgScoreWin = withScore.filter(c => c.hasil==='WIN').length > 0 ? (withScore.filter(c=>c.hasil==='WIN').reduce((a,c)=>a+(c.score||0),0)/withScore.filter(c=>c.hasil==='WIN').length).toFixed(0) : '—';
+  const avgScoreLoss = withScore.filter(c => c.hasil==='LOSS').length > 0 ? (withScore.filter(c=>c.hasil==='LOSS').reduce((a,c)=>a+(c.score||0),0)/withScore.filter(c=>c.hasil==='LOSS').length).toFixed(0) : '—';
+  document.getElementById('ac-deploy').textContent = dep.length > 0 ? Math.round(depWin/dep.length*100) + '%' : '—';
+  document.getElementById('ac-false').textContent = dep.length > 0 ? Math.round(depLoss/dep.length*100) + '%' : '—';
+  document.getElementById('ac-conservative').textContent = withV.filter(c=>c.verdict==='WAIT').length > 0 ? Math.round(waitWin/withV.filter(c=>c.verdict==='WAIT').length*100) + '%' : '—';
+  document.getElementById('ac-scorew').textContent = avgScoreWin;
+  document.getElementById('ac-scorel').textContent = avgScoreLoss;
+  const avgWin = wins.length > 0 ? (wins.reduce((a,c)=>a+c.pnl,0)/wins.length).toFixed(2) : '—';
+  const avgLoss = losses.length > 0 ? (losses.reduce((a,c)=>a+c.pnl,0)/losses.length).toFixed(2) : '—';
+  const avgDurWin = wins.length > 0 ? Math.round(wins.reduce((a,c)=>a+(c.durasi||0),0)/wins.length) : '—';
+  document.getElementById('ac-fav').textContent = dep.length > 0 ? depWin + '/' + dep.length : '—';
+  document.getElementById('ac-ideal').textContent = wins.length + ' WIN total';
+  document.getElementById('ac-avgwin').textContent = avgWin !== '—' ? '+' + avgWin + '%' : '—';
+  document.getElementById('ac-avgloss').textContent = avgLoss !== '—' ? avgLoss + '%' : '—';
+  document.getElementById('ac-dur').textContent = avgDurWin !== '—' ? avgDurWin + 'm' : '—';
+
+  // equity curve
+  drawEquity(cycles);
+
+  // table
+  const tbody = document.getElementById('cycleTableBody');
+  if (cycles.length === 0) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">Belum ada data cycle.</td></tr>'; return; }
+  tbody.innerHTML = [...cycles].reverse().map((c, i) => {
+    const n = cycles.length - i;
+    const pnlColor = c.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    const hasilBadge = `<span class="badge ${c.hasil==='WIN'?'win':c.hasil==='LOSS'?'loss':''}">${c.hasil}</span>`;
+    const verdictBadge = c.verdict ? `<span class="badge ${c.verdict==='DEPLOY'?'deploy':'wait'}">${c.verdict}</span>` : '—';
+    return `<tr>
+      <td style="color:var(--muted)">${n}</td>
+      <td>${c.tgl}</td>
+      <td>${hasilBadge}</td>
+      <td style="color:${pnlColor}">${c.pnl>=0?'+':''}${c.pnl.toFixed(2)}%</td>
+      <td>${c.durasi}m</td>
+      <td>$${(c.fee||0).toFixed(2)}</td>
+      <td>${verdictBadge}</td>
+      <td><span style="color:var(--muted);cursor:pointer;font-size:10px" onclick="deleteCycle(${c.id})">× hapus</span></td>
+    </tr>`;
+  }).join('');
+
+  updateFeedbackBanner();
+}
+
+function drawEquity(cycles) {
+  const canvas = document.getElementById('equityCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const w = canvas.offsetWidth, h = canvas.offsetHeight;
+  ctx.clearRect(0, 0, w, h);
+  if (cycles.length === 0) return;
+  let eq = [0]; let cum = 0;
+  cycles.forEach(c => { cum += (c.pnl||0); eq.push(cum); });
+  const minV = Math.min(...eq), maxV = Math.max(...eq);
+  const range = maxV - minV || 1;
+  const pad = 16;
+  const toX = i => pad + (i / (eq.length - 1)) * (w - pad * 2);
+  const toY = v => h - pad - ((v - minV) / range) * (h - pad * 2);
+  // zero line
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  const zy = toY(0);
+  ctx.beginPath(); ctx.moveTo(pad, zy); ctx.lineTo(w - pad, zy); ctx.stroke();
+  ctx.setLineDash([]);
+  // fill
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, '#00e67630'); grad.addColorStop(1, '#00e67600');
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(eq[0]));
+  eq.forEach((v, i) => { if (i > 0) ctx.lineTo(toX(i), toY(v)); });
+  ctx.lineTo(toX(eq.length - 1), h); ctx.lineTo(toX(0), h); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+  // line
+  ctx.beginPath(); ctx.strokeStyle = '#00e676'; ctx.lineWidth = 2;
+  eq.forEach((v, i) => { i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)); });
+  ctx.stroke();
+  // dots
+  eq.forEach((v, i) => {
+    ctx.beginPath(); ctx.arc(toX(i), toY(v), 3, 0, Math.PI * 2);
+    ctx.fillStyle = v >= 0 ? '#00e676' : '#ff1744'; ctx.fill();
+  });
+}
+
+function exportCSV() {
+  const cycles = getCycles();
+  if (!cycles.length) return;
+  const header = 'No,Tanggal,Hasil,PnL%,Durasi(mnt),Fee$,VerdictAgent,Score\n';
+  const rows = cycles.map((c,i) => `${i+1},${c.tgl},${c.hasil},${c.pnl},${c.durasi},${c.fee||0},${c.verdict||''},${c.score||''}`).join('\n');
+  const blob = new Blob([header + rows], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'jsm-91-cycles.csv'; a.click();
+}
+
+// ════════════════════════════════════
+// LOG
+// ════════════════════════════════════
+function addLog(msg, type) {
+  const list = document.getElementById('logList');
+  const t = new Date().toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const item = document.createElement('div'); item.className = 'log-item';
+  item.innerHTML = `<span class="log-time">${t}</span><span class="log-text ${type||'info'}">${msg}</span>`;
+  list.appendChild(item); list.scrollTop = list.scrollHeight;
+}
+
+// ════════════════════════════════════
+// INIT
+// ════════════════════════════════════
+document.getElementById('qf-tgl').value = new Date().toISOString().slice(0,10);
+renderH1Panel();
+updateFeedbackBanner();
+fetchPrice();
+setInterval(fetchPrice, 30000);
+</script>
+</body>
+</html>
